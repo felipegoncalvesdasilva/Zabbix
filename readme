@@ -1,0 +1,103 @@
+##########################################################
+             Instalacao do Zabbix em 2 CAMADAS
+            ( Zabbix e banco de dados Mysql separados)
+##########################################################
+
+Sistema Operacional:
+- Ubuntu 22.04
+
+
+Instalação do Zabbix (Servidor Zabbix)
+###############################################
+
+1. Instalar o Repositório Zabbix 7.0
+
+wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-1+ubuntu22.04_all.deb
+sudo dpkg -i zabbix-release_7.0-1+ubuntu22.04_all.deb
+
+sudo apt update
+
+2. Instalar Pacotes Zabbix e Cliente MySQL
+
+sudo apt install zabbix-server-mysql zabbix-frontend-php zabbix-nginx-conf zabbix-sql-scripts zabbix-agent mysql-client -y
+
+3. Importar o Schema Inicia
+
+zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mysql --default-character-set=utf8mb4 -u zabbix -p -h "IPDOSERVIDORDB" zabbix
+
+4. Configurar o servidor Zabbix
+
+sudo vi /etc/zabbix/zabbix_server.conf
+
+ARQUIVO Zabbix_server.conf
+
+DBHost= IP do seu Servidor de Banco
+DBName=zabbix
+DBUser=zabbix
+DBPassword= SenhaSegura
+
+5. Configurar o Nginx
+
+sudo vi /etc/zabbix/nginx.conf
+
+ARQUIVO nginx.conf
+
+listen 80;
+server_name zabbix.empresa.com; # Ou coloque o IP
+
+
+Instalação do Mysql 
+###############################################
+
+1. Instalar o Mysql
+
+sudo apt update
+sudo apt install mysql-server -y
+
+2. Inicie o servico e inseguras de fabrica
+
+sudo mysql_secure_installation
+
+Y
+Y
+Y
+Y
+Y
+
+3. Configurando um Usuário Admin
+
+sudo mysql
+
+-- Criar um novo usuário chamado 'admin' (ou outro nome que preferir)
+CREATE USER 'admin'@'localhost' IDENTIFIED BY 'sua_senha';
+
+-- Dar permissão total a ele (igual ao root)
+GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;
+
+-- Aplicar as mudanças
+FLUSH PRIVILEGES;
+
+-- Sair
+EXIT;
+
+6. Testando o acesso
+
+mysql -u admin -p
+
+
+Configuracao do Mysql 
+#############################################
+
+1. Acessando o console
+
+sudo mysql -u root -p
+
+2. Criar Banco e Usuário Zabbix
+
+create database zabbix character set utf8mb4 collate utf8mb4_bin;
+create user zabbix@'IP_servidor' identified by 'senhauser';
+grant all privileges on zabbix.* to zabbix@'IP_servidor';
+set global log_bin_trust_function_creators = 1;
+quit;
+
+3.Liberar Acesso Remoto
