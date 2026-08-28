@@ -92,7 +92,7 @@ item_id = tester.criar_item(
 ```python
 trigger_id = tester.criar_trigger(
     name="CPU Alto",
-    expression="{MeuPrimeiroServidor:system.cpu.load.last()}>3",
+    expression="last(/MeuPrimeiroServidor/system.cpu.load)>3",
     severity=3
 )
 ```
@@ -136,14 +136,14 @@ for name, key in metricas:
 # Aviso
 tester.criar_trigger(
     name="CPU Warning",
-    expression="{Server:cpu.last()}>50",
+    expression="last(/Server/cpu)>50",
     severity=2  # Warning
 )
 
 # Crítico
 tester.criar_trigger(
     name="CPU Critical",
-    expression="{Server:cpu.last()}>80",
+    expression="last(/Server/cpu)>80",
     severity=4  # High
 )
 ```

@@ -131,17 +131,17 @@ def exemplo_4_criar_triggers_completo():
                 triggers = [
                     {
                         "name": "CPU Warning",
-                        "expression": "{ProductionServer:system.cpu.load.last()}>2",
+                        "expression": "last(/ProductionServer/system.cpu.load)>2",
                         "severity": 2  # Warning
                     },
                     {
                         "name": "CPU High",
-                        "expression": "{ProductionServer:system.cpu.load.last()}>3",
+                        "expression": "last(/ProductionServer/system.cpu.load)>3",
                         "severity": 4  # High
                     },
                     {
                         "name": "CPU Critical",
-                        "expression": "{ProductionServer:system.cpu.load.last()}>4",
+                        "expression": "last(/ProductionServer/system.cpu.load)>4",
                         "severity": 5  # Disaster
                     }
                 ]

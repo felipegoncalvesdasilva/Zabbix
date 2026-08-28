@@ -126,7 +126,7 @@ if host_id:
 ```python
 trigger_id = tester.criar_trigger(
     name="High CPU Alert",
-    expression="{MeuServidor:system.cpu.load.last()}>3",
+    expression="last(/MeuServidor/system.cpu.load)>3",
     severity=3,  # Average
     description="CPU acima de 3"
 )
@@ -193,7 +193,7 @@ Severidades:
 ```python
 trigger = tester.criar_trigger(
     name="High Memory Usage",
-    expression="{Servidor Web 01:vm.memory.size[pused].last()}>80",
+    expression="last(/Servidor Web 01/vm.memory.size[pused])>80",
     severity=4,                      # High
     description="Memória acima de 80%"
 )
@@ -203,30 +203,32 @@ trigger = tester.criar_trigger(
 
 ## 🔑 Expressões de Trigger
 
-As expressões definem **quando** um trigger deve disparar:
+As expressões definem **quando** um trigger deve disparar. A partir do Zabbix
+5.4, a sintaxe é `função(/host/chave)`, no formato `função(/host/chave,parâmetros)`
+— o formato antigo `{Host:chave.função()}` foi removido e não é mais aceito.
 
-### Operadores
-- `.last()` - Último valor coletado
-- `.avg()` - Média dos valores
-- `.max()` - Valor máximo
-- `.min()` - Valor mínimo
-- `.count()` - Contagem de valores
+### Funções
+- `last(/host/chave)` - Último valor coletado
+- `avg(/host/chave,Ns)` - Média dos valores no período (ex: `avg(/h/i,5m)`)
+- `max(/host/chave,Ns)` - Valor máximo no período
+- `min(/host/chave,Ns)` - Valor mínimo no período
+- `count(/host/chave,Ns)` - Contagem de valores no período
 
 ### Exemplos
 
 **CPU alta:**
 ```
-{Servidor:system.cpu.load.last()}>4
+last(/Servidor/system.cpu.load)>4
 ```
 
 **Memória baixa:**
 ```
-{Servidor:vm.memory.size[pused].last()}>85
+last(/Servidor/vm.memory.size[pused])>85
 ```
 
 **Múltiplas condições:**
 ```
-({Server1:cpu.last()}>80) and ({Server2:memory.last()}>80)
+(last(/Server1/cpu)>80) and (last(/Server2/memory)>80)
 ```
 
 ---

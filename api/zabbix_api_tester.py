@@ -59,14 +59,16 @@ class ZabbixTester:
         """
         try:
             print(f"\n📡 Conectando ao Zabbix: {self.url}")
-            
-            self.zabbix = ZabbixAPI(
-                self.url,
-                user=self.username,
-                password=self.password,
-                ssl_verify=self.verify_ssl
-            )
-            
+
+            # pyzabbix >=1.3 não aceita mais user/password/ssl_verify no
+            # construtor: a verificação SSL vai numa Session e o login é
+            # feito à parte, chamando login().
+            session = requests.Session()
+            session.verify = self.verify_ssl
+
+            self.zabbix = ZabbixAPI(self.url, session=session)
+            self.zabbix.login(self.username, self.password)
+
             # Testar conexão
             api_version = self.zabbix.api_version()
             print(f"✅ Conectado com sucesso!")
@@ -152,7 +154,7 @@ class ZabbixTester:
         """
         try:
             print(f"\n📊 Criando item: {name}")
-            
+
             item_data = {
                 "hostid": host_id,
                 "name": name,
@@ -164,7 +166,18 @@ class ZabbixTester:
                 "history": "90d",  # Manter histórico por 90 dias
                 "trends": "365d"   # Manter trends por 1 ano
             }
-            
+
+            # Items do tipo "Zabbix agent" (0) e "Zabbix agent (active)" (7)
+            # exigem informar qual interface do host usar.
+            if item_type == 0:
+                interfaces = self.zabbix.hostinterface.get(
+                    hostids=host_id, filter={"type": 1}
+                )
+                if not interfaces:
+                    print(f"❌ Erro ao criar item: host {host_id} não tem interface Zabbix agent configurada")
+                    return None
+                item_data["interfaceid"] = interfaces[0]["interfaceid"]
+
             result = self.zabbix.item.create(**item_data)
             item_id = result.get('itemids', [None])[0]
             
@@ -187,7 +200,9 @@ class ZabbixTester:
         
         Args:
             name: Nome do trigger (ex: "High CPU Usage")
-            expression: Expressão do trigger (ex: "{Host:item.last()}>80")
+            expression: Expressão do trigger, sintaxe Zabbix >=5.4
+                (ex: "last(/Host/item)>80"; o formato antigo
+                "{Host:item.last()}>80" foi removido nas versões atuais)
             severity: Severidade (0=Not classified, 1=Info, 2=Warning, 3=Average, 4=High, 5=Disaster)
             description: Descrição do trigger
             
@@ -273,8 +288,10 @@ class ZabbixTester:
         try:
             print(f"\n📊 Listando items do host {host_id}...")
             
+            # A API do Zabbix espera "hostids" (plural); "hostid" é
+            # ignorado silenciosamente e devolve items de TODOS os hosts.
             items = self.zabbix.item.get(
-                hostid=host_id,
+                hostids=host_id,
                 output=['itemid', 'name', 'key_', 'lastvalue', 'lastclock'],
                 sortfield='name'
             )
@@ -434,7 +451,7 @@ def exemplo_completo():
         if item1_id:
             tester.criar_trigger(
                 name="High CPU Usage",
-                expression=f"{{TestServer-001:system.cpu.load[percpu,avg1].last()}}>4",
+                expression="last(/TestServer-001/system.cpu.load[percpu,avg1])>4",
                 severity=3,  # Average
                 description="CPU com uso alto (acima de 4)"
             )
@@ -442,7 +459,7 @@ def exemplo_completo():
         if item2_id:
             tester.criar_trigger(
                 name="Low Memory Available",
-                expression=f"{{TestServer-001:vm.memory.size[pused].last()}}>80",
+                expression="last(/TestServer-001/vm.memory.size[pused])>80",
                 severity=4,  # High
                 description="Pouca memória disponível (menos de 20%)"
             )
