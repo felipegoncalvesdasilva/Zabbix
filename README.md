@@ -34,7 +34,7 @@ O [Zabbix](https://www.zabbix.com/) é uma plataforma open source de monitoramen
 
 | Item | Recomendado |
 |------|-------------|
-| Sistema operacional | Debian / Ubuntu (ajuste conforme a sua distribuição) |
+| Sistema operacional | Ubuntu (ajuste conforme a sua distribuição) |
 | Acesso | Usuário `root` ou com `sudo` |
 | Memória RAM | 2 GB ou mais |
 | Disco | 20 GB ou mais |
